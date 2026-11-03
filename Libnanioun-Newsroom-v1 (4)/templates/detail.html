@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}{{ article['title'] }} — لبنانيون{% endblock %}
+{% block content %}
+<div class="backline"><a href="{{ url_for('index') }}">← رجوع لجميع الأخبار</a></div>
+<section class="intro compact-intro">
+  <div><div class="eyebrow">الخبر #{{ article['id'] }}</div><h1>{{ article['title'] }}</h1>
+    <div class="meta-row"><span>{{ article['created_at'] }}</span>
+      {% if article['breaking'] %}<span class="urgent-label">عاجل</span>{% endif %}
+      <span class="status {% if article['status']=='published' %}ok{% elif article['status']=='draft' %}draft{% else %}needs-check{% endif %}">
+      {{ {'draft':'مسودة','published':'منشور فيسبوك','publishing':'جاري النشر','check':'تحقّق من فيسبوك'}.get(article['status'],'حالة غير معروفة') }}</span></div>
+  </div>
+  {% if article['status']=='draft' %}<a href="{{ url_for('edit_article',article_id=article['id']) }}" class="btn btn-outline">تعديل الخبر</a>{% endif %}
+</section>
+<div class="two-column">
+  <section class="panel padded">
+    {% if article['image_filename'] %}<img class="hero-image" src="{{ url_for('uploaded_image', filename=article['image_filename']) }}" alt="صورة الخبر">{% endif %}
+    <h2>نص الخبر</h2>
+    <p class="article-body">{{ article['body'] or 'لم تُضف تفاصيل لهذا الخبر.' }}</p>
+    <div class="article-source">المصدر: <strong>{{ article['source_name'] or 'غير مذكور' }}</strong>
+      {% if article['source_url'] %}<a href="{{ article['source_url'] }}" target="_blank" rel="noopener noreferrer">الاطلاع على المصدر</a>{% endif %}
+    </div>
+    <hr class="soft-rule">
+    <h2>النص الجاهز لقناة واتساب</h2>
+    <textarea id="whatsapp-text" class="copy-text" readonly rows="10">{{ channel_text }}</textarea>
+    <div class="action-row">
+      <button type="button" class="btn btn-outline" onclick="copyFrom('whatsapp-text', this)">نسخ نص الخبر</button>
+      {% if article['image_filename'] %}<a class="btn btn-outline" download="libnanioun-{{ article['id'] }}.jpg" href="{{ url_for('uploaded_image', filename=article['image_filename']) }}">تنزيل الصورة</a>{% endif %}
+      {% if channel_url %}<a class="btn btn-outline" target="_blank" rel="noopener noreferrer" href="{{ channel_url }}">فتح قناة واتساب</a>
+      {% else %}<span class="muted">رابط القناة غير مضبوط بعد</span>{% endif %}
+    </div>
+    <p class="micro">واتساب: افتح القناة كمسؤول، الصق النص وأرفق الصورة ثم انشر. زر «فتح قناة واتساب» لا ينشر بنفسه.</p>
+  </section>
+  <aside class="side-panel">
+    <div class="step-head">01 <span>النشر على فيسبوك</span></div>
+    {% if article['status']=='draft' %}
+      {% if article['facebook_error'] %}<div class="notice error-note">{{ article['facebook_error'] }}</div>{% endif %}
+      <p class="muted">لن يُرسل أي خبر من دون الموافقة الصريحة.</p>
+      <form method="post" action="{{ url_for('publish_article',article_id=article['id']) }}" onsubmit="return confirm('تأكيد نشر هذا الخبر علناً على صفحة لبنانيون في فيسبوك؟');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="checkline"><input type="checkbox" name="editor_approved" value="yes" required><span>راجعت الخبر والمصدر والصورة وأوافق على نشره.</span></label>
+        <button class="btn btn-red btn-wide" type="submit" {% if not facebook_is_configured %}disabled title="أكمل إعدادات فيسبوك أولاً"{% endif %}>اعتماد ونشر على فيسبوك</button>
+      </form>
+      {% if not facebook_is_configured %}<p class="micro warning">الربط مع فيسبوك غير مفعّل. أدخل Page ID و Page Access Token في إعدادات الخادم.</p>{% endif %}
+    {% elif article['status']=='published' %}
+      <div class="notice success-note">✓ تم تسجيل نجاح النشر على فيسبوك بتاريخ {{ article['published_at'] }}.</div>
+      <p class="micro">معرّف المنشور: <span class="ltr">{{ article['facebook_post_id'] }}</span></p>
+    {% elif article['status']=='check' %}
+      <div class="notice error-note">حالة النشر غير مؤكدة. افتح صفحة فيسبوك وتحقق يدوياً قبل طلب أي إعادة محاولة؛ البرنامج يمنع التكرار.</div>
+    {% else %}<div class="notice">جاري تنفيذ عملية النشر، لا تضغط مرة ثانية.</div>{% endif %}
+    <hr class="soft-rule">
+    <div class="step-head">02 <span>النشر على واتساب</span></div>
+    {% if article['status']=='published' %}
+      {% if article['whatsapp_done'] %}
+        <div class="notice success-note">✓ تم تعليم الخبر كمنشور على قناة واتساب.</div>
+        <form action="{{ url_for('reset_whatsapp',article_id=article['id']) }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn btn-outline btn-wide">إعادة لقائمة انتظار واتساب</button></form>
+      {% else %}
+        <p class="muted">بعد ما تنشره بالقناة يدوياً، اضغط هالزر لتحديث السجل.</p>
+        <form action="{{ url_for('mark_whatsapp',article_id=article['id']) }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn btn-green btn-wide">✓ تم النشر على قناة واتساب</button></form>
+      {% endif %}
+    {% else %}<p class="muted">جهّز النص والصورة من اليسار، وننتظر اعتماد الخبر على فيسبوك.</p>{% endif %}
+  </aside>
+</div>
+{% endblock %}

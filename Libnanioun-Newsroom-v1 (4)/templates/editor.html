@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل خبر' if article else 'خبر جديد' }} — لبنانيون{% endblock %}
+{% block content %}
+<div class="backline"><a href="{{ url_for('index') }}">← رجوع للوحة</a></div>
+<section class="intro compact-intro"><div><div class="eyebrow">غرفة التحرير</div><h1>{{ 'تعديل مسودة' if article else 'إنشاء خبر جديد' }}</h1><p class="muted">احفظ الخبر أولاً، ثم راجعه قبل النشر.</p></div></section>
+<div class="two-column">
+  <section class="panel padded">
+    <form method="post" enctype="multipart/form-data" class="editor-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>عنوان الخبر <em>*</em><input name="title" maxlength="250" required placeholder="اكتب عنواناً واضحاً ودقيقاً" value="{{ article['title'] if article else '' }}"></label>
+      <label>التفاصيل<textarea name="body" rows="7" maxlength="10000" placeholder="أضف التفاصيل المتحقّق منها...">{{ article['body'] if article else '' }}</textarea></label>
+      <div class="form-grid">
+        <label>اسم المصدر<input name="source_name" maxlength="250" placeholder="مثال: بيان رسمي" value="{{ article['source_name'] if article else '' }}"></label>
+        <label>رابط المصدر<input type="url" name="source_url" maxlength="1200" placeholder="https://..." value="{{ article['source_url'] if article else '' }}"></label>
+      </div>
+      <label class="upload-label">صورة الخبر (JPG / PNG / WEBP، حتى 12MB)<input type="file" name="image" accept="image/*" id="image-input"></label>
+      {% if article and article['image_filename'] %}<p class="micro">الصورة الحالية ستبقى إذا لم تختر صورة جديدة.</p><img class="editor-preview" src="{{ url_for('uploaded_image',filename=article['image_filename']) }}" alt="الصورة الحالية">{% endif %}
+      <img id="new-preview" class="editor-preview hidden" alt="معاينة الصورة الجديدة">
+      <label class="checkline"><input type="checkbox" name="breaking" value="1" {% if article and article['breaking'] %}checked{% endif %}><span>هذا خبر عاجل (إظهار شارة عاجل بالنص)</span></label>
+      <div class="notice">🔒 الحفظ لا ينشر الخبر. النشر على فيسبوك يتم فقط بعد فتح الخبر والضغط على «اعتماد ونشر».</div>
+      <button class="btn btn-red btn-wide" type="submit">حفظ المسودة</button>
+    </form>
+  </section>
+  <aside class="side-panel">
+    <h3>قواعد سريعة قبل النشر</h3>
+    <div class="rule">1. تأكّد من المصدر والتاريخ.</div>
+    <div class="rule">2. ميّز الاتهامات عن الوقائع المثبتة.</div>
+    <div class="rule">3. راجع الصورة وأنها تخص الخبر فعلاً.</div>
+    <div class="rule">4. انشر بعد التأكّد من الصياغة.</div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const inp = document.getElementById('image-input');
+if(inp) inp.addEventListener('change', () => {
+  const img = document.getElementById('new-preview');
+  if(inp.files && inp.files[0]) { img.src = URL.createObjectURL(inp.files[0]); img.classList.remove('hidden'); }
+  else { img.src = ''; img.classList.add('hidden'); }
+});
+</script>
+{% endblock %}
