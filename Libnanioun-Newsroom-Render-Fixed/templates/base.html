@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a1931">
+  <title>{% block title %}لوحة لبنانيون{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='app.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a href="{{ url_for('index') }}" class="brand">
+      <span class="brand-icon"><img src="{{ url_for('static', filename='logo.jpg') }}" alt="شعار لبنانيون"></span>
+      <span><strong>لبنانيون</strong><small>لوحة الأخبار العاجلة</small></span>
+    </a>
+    {% if session.get('logged_in') %}
+    <nav class="top-actions">
+      <a href="{{ url_for('index') }}" class="navlink">الرئيسية</a>
+      <a href="{{ url_for('new_article') }}" class="btn btn-red btn-sm">+ خبر جديد</a>
+      <form action="{{ url_for('logout') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-ghost btn-sm" type="submit">خروج</button>
+      </form>
+    </nav>
+    {% endif %}
+  </header>
+  <main class="layout">
+    {% with messages=get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <div role="alert" class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">© لبنانيون للأخبار العاجلة — لوحة داخلية للنشر والتحرير</footer>
+  <script>
+  async function copyFrom(id, button) {
+    const box = document.getElementById(id);
+    if (!box) return;
+    try {
+      await navigator.clipboard.writeText(box.value || box.innerText);
+      const original = button.innerText;
+      button.innerText = '✓ تم نسخ النص';
+      setTimeout(() => button.innerText = original, 1600);
+    } catch(e) {
+      if (box.select) { box.select(); document.execCommand('copy'); alert('تم تحديد النص. انسخه إذا لزم الأمر.'); }
+      else alert('حدّد النص وانسخه يدوياً.');
+    }
+  }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}دخول الإدارة — لبنانيون{% endblock %}
+{% block content %}
+<section class="login-card">
+  <img src="{{ url_for('static', filename='logo.jpg') }}" alt="لبنانيون" class="login-logo">
+  <h1>دخول غرفة الأخبار</h1>
+  <p class="muted">دخول مخصّص لفريق إدارة منشورات لبنانيون.</p>
+  <form method="post" class="editor-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>اسم المستخدم<input name="username" required autocomplete="username" placeholder="admin"></label>
+    <label>كلمة المرور<input type="password" name="password" required autocomplete="current-password" placeholder="••••••••"></label>
+    <button class="btn btn-red btn-wide" type="submit">دخول آمن</button>
+  </form>
+  <p class="micro">يتم ضبط بيانات الدخول في إعدادات الخادم، وليس في ملفات الموقع العامة.</p>
+</section>
+{% endblock %}

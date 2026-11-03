@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}غرفة الأخبار — لبنانيون{% endblock %}
+{% block content %}
+<section class="intro">
+  <div>
+    <div class="eyebrow"><span class="live-dot"></span> غرفة التحرير</div>
+    <h1>مرحباً في لوحة لبنانيون</h1>
+    <p class="muted">خبر واحد، إدارة واضحة، ونشر على فيسبوك بعد اعتمادك.</p>
+  </div>
+  <a class="btn btn-red" href="{{ url_for('new_article') }}">+ إضافة خبر جديد</a>
+</section>
+<section class="stats">
+  <div class="stat"><span>إجمالي الأخبار</span><strong>{{ counts['total'] or 0 }}</strong></div>
+  <div class="stat"><span>مسودات</span><strong>{{ counts['drafts'] or 0 }}</strong></div>
+  <div class="stat"><span>منشور على فيسبوك</span><strong>{{ counts['published'] or 0 }}</strong></div>
+  <div class="stat accent"><span>بانتظار قناة واتساب</span><strong>{{ counts['pending_wa'] or 0 }}</strong></div>
+</section>
+<div class="settings-strip">
+  <div>فيسبوك:
+    {% if facebook_is_configured %}<span class="good">● بيانات الربط مدخلة (تحتاج اختبار نشر)</span>
+    {% else %}<span class="warning">● غير مربوط بعد</span>{% endif %}
+  </div>
+  <div>واتساب: <span>تجهيز ونسخ يدوي للقناة</span></div>
+</div>
+<section class="panel">
+  <div class="panel-heading"><h2>الأخبار الأخيرة</h2><span class="muted">أحدث 100 خبر</span></div>
+  {% if articles %}
+    <div class="article-list">
+    {% for article in articles %}
+      <a class="article-item" href="{{ url_for('article_detail',article_id=article['id']) }}">
+        {% if article['image_filename'] %}<img class="article-thumb" src="{{ url_for('uploaded_image',filename=article['image_filename']) }}" alt="صورة الخبر">
+        {% else %}<span class="article-thumb empty-thumb">📰</span>{% endif %}
+        <div class="article-info">
+          <div class="article-title">{% if article['breaking'] %}<span class="urgent-label">عاجل</span>{% endif %} {{ article['title'] }}</div>
+          <span class="micro">{{ article['created_at'] }} · {{ article['source_name'] or 'بلا مصدر مُسمّى' }}</span>
+        </div>
+        <span class="status {% if article['status']=='published' %}ok{% elif article['status']=='draft' %}draft{% else %}needs-check{% endif %}">
+          {% if article['status']=='published' %}منشور{% elif article['status']=='draft' %}مسودة{% elif article['status']=='publishing' %}جاري النشر{% else %}تحقق يدوياً{% endif %}
+        </span>
+        {% if article['status']=='published' %}
+          <span class="status {% if article['whatsapp_done'] %}ok{% else %}draft{% endif %}">واتساب: {{ 'تم' if article['whatsapp_done'] else 'بانتظارك' }}</span>
+        {% endif %}
+      </a>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📰</div>
+      <h3>ما في أخبار بعد</h3>
+      <p class="muted">ابدأ بأول خبر واحفظه كمسودة قبل النشر.</p>
+      <a class="btn btn-red" href="{{ url_for('new_article') }}">إنشاء أول خبر</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
